@@ -110,7 +110,7 @@
                 selected = null;
                 turn = 2;
                 if (!checkGameOver()) {
-                    statusText.innerText = "Bot o'ylamoqda...";
+                    statusText.innerText = "AI o'ylamoqda...";
                     setTimeout(aiMove, 800);
                 }
             }
@@ -212,7 +212,7 @@
                 return true;
             }
             if (p1Pieces === 0 || (turn === 1 && p1Moves === 0)) {
-                statusText.innerText = "O'yin tugadi: BOT YUTDI! 🤖";
+                statusText.innerText = "O'yin tugadi: AI YUTDI! 🤖";
                 restartBtn.style.display = 'block';
                 return true;
             }
@@ -223,4 +223,5 @@
     </script>
 </body>
 </html>
+
 
