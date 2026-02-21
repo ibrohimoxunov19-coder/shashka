@@ -2,32 +2,94 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rossiya Shashkasi AI</title>
     <style>
-        body { background: #2c3e50; display: flex; flex-direction: column; align-items: center; color: white; font-family: sans-serif; }
-        #board { display: grid; grid-template-columns: repeat(8, 60px); grid-template-rows: repeat(8, 60px); border: 8px solid #34495e; margin-top: 20px; }
-        .cell { width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; cursor: pointer; }
-        .black { background: #769656; } .white { background: #eeeed2; }
-        .piece { width: 50px; height: 50px; border-radius: 50%; position: relative; transition: 0.2s; }
-        .p1 { background: #ecf0f1; box-shadow: 0 4px #bdc3c7; } /* Oqlar */
-        .p2 { background: #c0392b; box-shadow: 0 4px #962d22; } /* AI */
-        .selected { transform: scale(1.1); box-shadow: 0 0 15px yellow !important; }
-        .king::after { content: '⭐'; display: block; text-align: center; line-height: 50px; color: gold; font-size: 20px; }
+        /* 1. DIZAYN (CSS) */
+        body { 
+            background: #2c3e50; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            color: white; 
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 { margin-bottom: 10px; }
+        #status {
+            background: #34495e;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        #board { 
+            display: grid; 
+            grid-template-columns: repeat(8, 60px); 
+            grid-template-rows: repeat(8, 60px); 
+            border: 10px solid #3e2723; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .cell { 
+            width: 60px; 
+            height: 60px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+        }
+        .black-cell { background-color: #769656; }
+        .white-cell { background-color: #eeeed2; }
+        
+        .piece { 
+            width: 50px; 
+            height: 50px; 
+            border-radius: 50%; 
+            cursor: pointer; 
+            position: relative;
+            transition: transform 0.2s;
+            border: 2px solid rgba(0,0,0,0.1);
+        }
+        /* O'yinchi - Oq */
+        .p1 { background: radial-gradient(circle at 30% 30%, #ffffff, #dcdde1); box-shadow: 0 4px 0 #95a5a6; }
+        /* AI - Qizil */
+        .p2 { background: radial-gradient(circle at 30% 30%, #e74c3c, #c0392b); box-shadow: 0 4px 0 #962d22; }
+        
+        .selected { transform: scale(1.15); box-shadow: 0 0 15px 5px yellow !important; z-index: 10; }
+        .king::after { 
+            content: '⭐'; 
+            font-size: 24px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100%; 
+            color: gold; 
+        }
+
+        @media (max-width: 500px) {
+            #board { grid-template-columns: repeat(8, 40px); grid-template-rows: repeat(8, 40px); }
+            .cell { width: 40px; height: 40px; }
+            .piece { width: 34px; height: 34px; }
+        }
     </style>
 </head>
 <body>
-    <h1>Rossiya Shashkasi AI</h1>
+
+    <h1>Shashka AI</h1>
     <div id="status">Sizning navbatingiz (Oqlar)</div>
     <div id="board"></div>
 
     <script>
+        /* 2. MANTIQ (JAVASCRIPT) */
         const boardElement = document.getElementById('board');
         const statusText = document.getElementById('status');
         let board = [];
         let selected = null;
-        let turn = 1;
+        let turn = 1; // 1: Siz, 2: AI
 
+        // O'yinni boshlash
         function init() {
+            board = [];
             for (let r = 0; r < 8; r++) {
                 board[r] = [];
                 for (let c = 0; c < 8; c++) {
@@ -46,8 +108,9 @@
             for (let r = 0; r < 8; r++) {
                 for (let c = 0; c < 8; c++) {
                     const cell = document.createElement('div');
-                    cell.className = `cell ${(r + c) % 2 === 0 ? 'white' : 'black'}`;
-                    cell.onclick = () => handleClick(r, c);
+                    cell.className = `cell ${(r + c) % 2 === 0 ? 'white-cell' : 'black-cell'}`;
+                    cell.onclick = () => onCellClick(r, c);
+                    
                     if (board[r][c]) {
                         const p = document.createElement('div');
                         p.className = `piece p${board[r][c].p} ${board[r][c].k ? 'king' : ''}`;
@@ -59,82 +122,106 @@
             }
         }
 
-        function handleClick(r, c) {
+        function onCellClick(r, c) {
             if (turn !== 1) return;
-            if (board[r][c] && board[r][c].p === 1) {
+
+            const piece = board[r][c];
+            if (piece && piece.p === 1) {
                 selected = { r, c };
             } else if (selected) {
-                if (executeMove(selected.r, selected.c, r, c)) {
+                if (movePiece(selected.r, selected.c, r, c)) {
                     selected = null;
                     turn = 2;
                     statusText.innerText = "AI o'ylamoqda...";
-                    setTimeout(aiMove, 1000);
+                    setTimeout(aiMove, 800);
                 }
             }
             render();
         }
 
-        function executeMove(fr, fc, tr, tc) {
+        function movePiece(fr, fc, tr, tc) {
             const dr = tr - fr;
             const dc = tc - fc;
-            if (!board[fr][fc] || board[tr][tc]) return false;
+            const piece = board[fr][fc];
+
+            if (board[tr][tc] !== null) return false;
 
             // Oddiy yurish (1 qadam diagonal)
             if (Math.abs(dr) === 1 && Math.abs(dc) === 1) {
-                if (board[fr][fc].k || (board[fr][fc].p === 1 && dr < 0) || (board[fr][fc].p === 2 && dr > 0)) {
-                    board[tr][tc] = board[fr][fc];
+                // Faqat oldinga (yoki damka bo'lsa hamma yoqqa)
+                if (piece.k || (piece.p === 1 && dr < 0) || (piece.p === 2 && dr > 0)) {
+                    board[tr][tc] = piece;
                     board[fr][fc] = null;
-                    if ((tr === 0 && board[tr][tc].p === 1) || (tr === 7 && board[tr][tc].p === 2)) board[tr][tc].k = true;
+                    checkKing(tr, tc);
                     return true;
                 }
             }
-            // Urish (2 qadam sakrash)
+
+            // Urish (2 qadam diagonal)
             if (Math.abs(dr) === 2 && Math.abs(dc) === 2) {
                 const mr = (fr + tr) / 2;
                 const mc = (fc + tc) / 2;
-                if (board[mr][mc] && board[mr][mc].p !== board[fr][fc].p) {
-                    board[tr][tc] = board[fr][fc];
+                const target = board[mr][mc];
+                if (target && target.p !== piece.p) {
+                    board[tr][tc] = piece;
                     board[fr][fc] = null;
                     board[mr][mc] = null;
-                    if ((tr === 0 && board[tr][tc].p === 1) || (tr === 7 && board[tr][tc].p === 2)) board[tr][tc].k = true;
+                    checkKing(tr, tc);
                     return true;
                 }
             }
             return false;
         }
 
+        function checkKing(r, c) {
+            if (board[r][c].p === 1 && r === 0) board[r][c].k = true;
+            if (board[r][c].p === 2 && r === 7) board[r][c].k = true;
+        }
+
+        // AI MANTIQI (Russkiy shashka: urish majburiy)
         function aiMove() {
             let moved = false;
-            // Rossiya shashkasi: AI avval urish imkonini qidiradi
+            
+            // 1. Birinchi navbatda urishni qidiradi
             for (let r = 0; r < 8 && !moved; r++) {
                 for (let c = 0; c < 8 && !moved; c++) {
                     if (board[r][c] && board[r][c].p === 2) {
-                        const jumps = [[2, 2], [2, -2], [-2, 2], [-2, -2]];
+                        const jumps = [[2,2],[2,-2],[-2,2],[-2,-2]];
                         for (let [dr, dc] of jumps) {
-                            if (executeMove(r, c, r + dr, c + dc)) { moved = true; break; }
-                        }
-                    }
-                }
-            }
-            // Agar urish bo'lmasa, oddiy yuradi
-            if (!moved) {
-                for (let r = 0; r < 8 && !moved; r++) {
-                    for (let c = 0; c < 8 && !moved; c++) {
-                        if (board[r][c] && board[r][c].p === 2) {
-                            const steps = [[1, 1], [1, -1]];
-                            for (let [dr, dc] of steps) {
-                                if (executeMove(r, c, r + dr, c + dc)) { moved = true; break; }
+                            let tr = r + dr, tc = c + dc;
+                            if (tr >= 0 && tr < 8 && tc >= 0 && tc < 8) {
+                                if (movePiece(r, c, tr, tc)) { moved = true; break; }
                             }
                         }
                     }
                 }
             }
+
+            // 2. Agar urish bo'lmasa, oddiy yuradi
+            if (!moved) {
+                for (let r = 0; r < 8 && !moved; r++) {
+                    for (let c = 0; c < 8 && !moved; c++) {
+                        if (board[r][c] && board[r][c].p === 2) {
+                            const steps = [[1,1],[1,-1],[-1,1],[-1,-1]];
+                            for (let [dr, dc] of steps) {
+                                let tr = r + dr, tc = c + dc;
+                                if (tr >= 0 && tr < 8 && tc >= 0 && tc < 8) {
+                                    if (movePiece(r, c, tr, tc)) { moved = true; break; }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             turn = 1;
             statusText.innerText = "Sizning navbatingiz (Oqlar)";
             render();
         }
 
+        // ISHGA TUSHIRISH
         init();
     </script>
 </body>
 </html>
+
