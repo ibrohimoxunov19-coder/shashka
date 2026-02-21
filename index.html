@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <title>Russian Checkers AI</title>
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; background: #2c3e50; color: white; font-family: sans-serif; }
+        #board { display: grid; grid-template-columns: repeat(8, 60px); grid-template-rows: repeat(8, 60px); border: 8px solid #34495e; }
+        .cell { width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; }
+        .black { background: #769656; } .white { background: #eeeed2; }
+        .piece { width: 50px; height: 50px; border-radius: 50%; cursor: pointer; position: relative; }
+        .p1 { background: #ecf0f1; box-shadow: 0 4px #bdc3c7; } /* Siz */
+        .p2 { background: #c0392b; box-shadow: 0 4px #962d22; } /* AI */
+        .king::after { content: '⭐'; font-size: 20px; display: flex; justify-content: center; align-items: center; height: 100%; }
+        .selected { border: 3px solid yellow; box-sizing: border-box; }
+        .highlight { background: rgba(255, 255, 0, 0.4) !important; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Rossiya Shashkasi (AI)</h1>
+    <p id="status">Sizning navbatingiz (Oqlar)</p>
+    <div id="board"></div>
+    <script src="script.js"></script>
+</body>
+</html>
