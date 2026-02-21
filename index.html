@@ -2,43 +2,49 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <title>Rossiya Shashkasi AI</title>
+    <title>Professional Shashka AI - Final</title>
     <style>
-        body { background: #2c3e50; display: flex; flex-direction: column; align-items: center; color: white; font-family: sans-serif; }
-        #board { display: grid; grid-template-columns: repeat(8, 60px); grid-template-rows: repeat(8, 60px); border: 8px solid #34495e; margin-top: 20px; }
+        body { background: #1a1a1a; display: flex; flex-direction: column; align-items: center; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
+        #board { display: grid; grid-template-columns: repeat(8, 60px); grid-template-rows: repeat(8, 60px); border: 10px solid #3e2723; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
         .cell { width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; cursor: pointer; }
         .black { background: #769656; } .white { background: #eeeed2; }
-        .piece { width: 50px; height: 50px; border-radius: 50%; position: relative; transition: 0.2s; border: 2px solid rgba(0,0,0,0.1); }
-        .p1 { background: #ffffff; box-shadow: 0 4px #bdc3c7; } /* Siz */
-        .p2 { background: #e74c3c; box-shadow: 0 4px #c0392b; } /* AI */
-        .selected { outline: 4px solid yellow; transform: scale(1.1); }
-        .king::after { content: '⭐'; display: block; text-align: center; line-height: 50px; color: gold; font-size: 20px; }
+        .piece { width: 50px; height: 50px; border-radius: 50%; position: relative; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 2px solid rgba(0,0,0,0.2); }
+        .p1 { background: #ffffff; box-shadow: 0 5px 0 #bdc3c7; }
+        .p2 { background: #e74c3c; box-shadow: 0 5px 0 #c0392b; }
+        .selected { outline: 5px solid #f1c40f; transform: scale(1.1); z-index: 10; }
+        .king::after { content: '⭐'; display: block; text-align: center; line-height: 50px; color: #f1c40f; font-size: 24px; }
+        #status { font-size: 1.5rem; margin: 20px; padding: 10px 30px; background: #2c3e50; border-radius: 50px; min-width: 250px; text-align: center; }
+        .btn-restart { margin-top: 15px; padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; display: none; }
     </style>
 </head>
 <body>
-    <h1>Rossiya Shashkasi AI</h1>
-    <div id="status">Sizning navbatingiz (Oqlar)</div>
+    <h1>Rossiya Shashkasi</h1>
+    <div id="status">Sizning navbatingiz</div>
     <div id="board"></div>
+    <button class="btn-restart" id="restartBtn" onclick="init()">Qayta boshlash</button>
 
     <script>
         const boardElement = document.getElementById('board');
         const statusText = document.getElementById('status');
+        const restartBtn = document.getElementById('restartBtn');
         let board = [];
         let selected = null;
         let turn = 1;
 
         function init() {
-            board = [];
+            board = Array(8).fill(null).map(() => Array(8).fill(null));
             for (let r = 0; r < 8; r++) {
-                board[r] = [];
                 for (let c = 0; c < 8; c++) {
                     if ((r + c) % 2 !== 0) {
                         if (r < 3) board[r][c] = { p: 2, k: false };
                         else if (r > 4) board[r][c] = { p: 1, k: false };
-                        else board[r][c] = null;
-                    } else board[r][c] = null;
+                    }
                 }
             }
+            turn = 1;
+            selected = null;
+            restartBtn.style.display = 'none';
+            statusText.innerText = "Sizning navbatingiz";
             render();
         }
 
@@ -65,81 +71,135 @@
             if (board[r][c] && board[r][c].p === 1) {
                 selected = { r, c };
             } else if (selected) {
-                if (executeMove(selected.r, selected.c, r, c)) {
+                const moves = getValidMoves(selected.r, selected.c);
+                const move = moves.find(m => m.tr === r && m.tc === c);
+                if (move) {
+                    applyMove(move);
+                    if (move.capture) {
+                        const extraJumps = getValidMoves(r, c).filter(m => m.capture);
+                        if (extraJumps.length > 0) {
+                            selected = { r, c };
+                            render();
+                            return;
+                        }
+                    }
                     selected = null;
                     turn = 2;
-                    statusText.innerText = "AI o'ylamoqda...";
-                    setTimeout(aiMove, 600);
+                    if (!checkGameOver()) {
+                        statusText.innerText = "Bot o'ylamoqda...";
+                        setTimeout(aiMove, 600);
+                    }
                 }
             }
             render();
         }
 
-        function executeMove(fr, fc, tr, tc) {
-            const dr = tr - fr; const dc = tc - fc;
-            if (!board[fr][fc] || board[tr][tc]) return false;
+        function getValidMoves(r, c) {
+            const piece = board[r][c];
+            if (!piece) return [];
+            const moves = [];
+            const dirs = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
 
-            // Oddiy yurish
-            if (Math.abs(dr) === 1 && Math.abs(dc) === 1) {
-                if (board[fr][fc].k || (board[fr][fc].p === 1 && dr < 0) || (board[fr][fc].p === 2 && dr > 0)) {
-                    board[tr][tc] = board[fr][fc];
-                    board[fr][fc] = null;
-                    checkKing(tr, tc);
-                    return true;
+            dirs.forEach(([dr, dc]) => {
+                let nr = r + dr, nc = c + dc;
+                let foundOpponent = null;
+
+                while (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
+                    const target = board[nr][nc];
+                    if (!target) {
+                        if (!foundOpponent) {
+                            if (piece.k || (piece.p === 1 && dr < 0) || (piece.p === 2 && dr > 0)) {
+                                moves.push({ fr: r, fc: c, tr: nr, tc: nc, capture: null });
+                            }
+                        } else {
+                            moves.push({ fr: r, fc: c, tr: nr, tc: nc, capture: foundOpponent });
+                        }
+                        if (!piece.k) break;
+                    } else if (target.p !== piece.p && !foundOpponent) {
+                        foundOpponent = { r: nr, c: nc };
+                    } else break;
+                    nr += dr; nc += dc;
                 }
-            }
-            // Urish
-            if (Math.abs(dr) === 2 && Math.abs(dc) === 2) {
-                const mr = (fr + tr) / 2; const mc = (fc + tc) / 2;
-                if (board[mr][mc] && board[mr][mc].p !== board[fr][fc].p) {
-                    board[tr][tc] = board[fr][fc];
-                    board[fr][fc] = null;
-                    board[mr][mc] = null;
-                    checkKing(tr, tc);
-                    return true;
-                }
-            }
-            return false;
+            });
+
+            // Agar urish imkoni bo'lsa, faqat urishlarni qaytaradi (Majburiy urish)
+            const hasCapture = moves.some(m => m.capture);
+            return hasCapture ? moves.filter(m => m.capture) : moves;
         }
 
-        function checkKing(r, c) {
-            if (board[r][c].p === 1 && r === 0) board[r][c].k = true;
-            if (board[r][c].p === 2 && r === 7) board[r][c].k = true;
+        function applyMove(move) {
+            board[move.tr][move.tc] = board[move.fr][move.fc];
+            board[move.fr][move.fc] = null;
+            if (move.capture) board[move.capture.r][move.capture.c] = null;
+            if ((move.tr === 0 && board[move.tr][move.tc].p === 1) || (move.tr === 7 && board[move.tr][move.tc].p === 2)) {
+                board[move.tr][move.tc].k = true;
+            }
         }
 
-        function aiMove() {
-            let moves = [];
-            let captures = [];
+        function checkGameOver() {
+            let p1Moves = false;
+            let p2Moves = false;
+            let p1Pieces = 0;
+            let p2Pieces = 0;
 
-            // AI uchun barcha mumkin bo'lgan yurishlarni yig'ish
             for (let r = 0; r < 8; r++) {
                 for (let c = 0; c < 8; c++) {
-                    if (board[r][c] && board[r][c].p === 2) {
-                        const targets = [[1,1], [1,-1], [-1,1], [-1,-1], [2,2], [2,-2], [-2,2], [-2,-2]];
-                        for (let [dr, dc] of targets) {
-                            let tr = r + dr, tc = c + dc;
-                            if (tr >= 0 && tr < 8 && tc >= 0 && tc < 8 && !board[tr][tc]) {
-                                if (Math.abs(dr) === 2) {
-                                    let mr = r + dr/2, mc = c + dc/2;
-                                    if (board[mr][mc] && board[mr][mc].p === 1) captures.push({fr:r, fc:c, tr, tc});
-                                } else if (dr > 0 || board[r][c].k) {
-                                    moves.push({fr:r, fc:c, tr, tc});
-                                }
-                            }
+                    const piece = board[r][c];
+                    if (piece) {
+                        const moves = getValidMoves(r, c);
+                        if (piece.p === 1) {
+                            p1Pieces++;
+                            if (moves.length > 0) p1Moves = true;
+                        } else {
+                            p2Pieces++;
+                            if (moves.length > 0) p2Moves = true;
                         }
                     }
                 }
             }
 
-            const finalMove = captures.length > 0 ? captures[0] : moves[Math.floor(Math.random() * moves.length)];
-            
-            if (finalMove) {
-                executeMove(finalMove.fr, finalMove.fc, finalMove.tr, finalMove.tc);
+            if (p2Pieces === 0 || (turn === 2 && !p2Moves)) {
+                statusText.innerText = "O'yin tugadi: SIZ YUTDINGIZ! 🎉";
+                restartBtn.style.display = 'block';
+                return true;
+            }
+            if (p1Pieces === 0 || (turn === 1 && !p1Moves)) {
+                statusText.innerText = "O'yin tugadi: AI YUTDI! 🤖";
+                restartBtn.style.display = 'block';
+                return true;
+            }
+            return false;
+        }
+
+        function aiMove() {
+            let allMoves = [];
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    if (board[r][c] && board[r][c].p === 2) {
+                        allMoves.push(...getValidMoves(r, c));
+                    }
+                }
             }
 
+            // Agar urish bo'lsa, AI urishga majbur
+            const captures = allMoves.filter(m => m.capture);
+            const move = captures.length > 0 ? captures[Math.floor(Math.random() * captures.length)] : allMoves[Math.floor(Math.random() * allMoves.length)];
+
+            if (move) {
+                applyMove(move);
+                // AI ketma-ket urishi mumkinmi?
+                if (move.capture && getValidMoves(move.tr, move.tc).filter(m => m.capture).length > 0) {
+                    setTimeout(aiMove, 400);
+                    render();
+                    return;
+                }
+            }
+            
             turn = 1;
-            statusText.innerText = "Sizning navbatingiz (Oqlar)";
             render();
+            if (!checkGameOver()) {
+                statusText.innerText = "Sizning navbatingiz";
+            }
         }
 
         init();
