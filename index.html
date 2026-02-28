@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Chess, Checkers & X-O AI</title>
+    <title>Ultimate AI Game Portal</title>
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #10b981; --white-cell: #f1f5f9; --black-cell: #475569; }
         body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; min-height: 100vh; }
@@ -12,32 +12,33 @@
         .menu-btn:hover { background: var(--accent); transform: scale(1.05); }
         #game-view { display: none; flex-direction: column; align-items: center; padding: 20px; width: 100%; }
         .back-btn { background: #ef4444; color: white; border: none; padding: 10px 25px; border-radius: 8px; cursor: pointer; margin-bottom: 20px; }
-        #status { margin-bottom: 20px; font-size: 1.3rem; padding: 10px 30px; background: var(--card); border-radius: 50px; border: 2px solid #334155; min-width: 250px; text-align: center; }
+        #status { margin-bottom: 20px; font-size: 1.3rem; padding: 10px 30px; background: var(--card); border-radius: 50px; border: 2px solid #334155; color: #fbbf24; text-align: center; }
         #board { display: grid; border: 8px solid #1e293b; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
-        .cell { display: flex; justify-content: center; align-items: center; cursor: pointer; width: 60px; height: 60px; font-size: 45px; }
+        .cell { width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 40px; position: relative; }
         .white { background: var(--white-cell); }
         .black { background: var(--black-cell); }
         .selected { background: #fbbf24 !important; }
+        .in-check { background: #f87171 !important; animation: pulse 1s infinite; }
         .piece-shashka { width: 80%; height: 80%; border-radius: 50%; border: 2px solid #333; display: flex; justify-content: center; align-items: center; }
         .king::after { content: '⭐'; font-size: 18px; color: gold; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
         .grid-8 { grid-template-columns: repeat(8, 60px); grid-template-rows: repeat(8, 60px); }
         .grid-3 { grid-template-columns: repeat(3, 100px); grid-template-rows: repeat(3, 100px); }
         .xo-cell { width: 100px; height: 100px; font-size: 4rem; background: var(--card); border: 2px solid #334155; }
-        @media (max-width: 500px) { .cell { width: 45px; height: 45px; font-size: 30px; } .grid-8 { grid-template-columns: repeat(8, 45px); grid-template-rows: repeat(8, 45px); } }
     </style>
 </head>
 <body>
 
     <div id="main-menu">
-        <h1 style="color: var(--accent);">Gamer Pro Portal</h1>
-        <button class="menu-btn" onclick="initGame('chess')">♟️ Shaxmat AI (Middle)</button>
+        <h1>Gamer Pro Portal</h1>
+        <button class="menu-btn" onclick="initGame('chess')">♟️ Shaxmat AI</button>
         <button class="menu-btn" onclick="initGame('checkers')">🔴 Shashka AI (Combo)</button>
         <button class="menu-btn" onclick="initGame('xo')">❌ Tic-Tac-Toe AI</button>
     </div>
 
     <div id="game-view">
-        <button class="back-btn" onclick="location.reload()">⬅ MENYUGA QAYTISH</button>
-        <div id="status">Sizning navbatingiz</div>
+        <button class="back-btn" onclick="location.reload()">⬅ ASOSIY MENYU</button>
+        <div id="status">Tayyormisiz?</div>
         <div id="board"></div>
     </div>
 
@@ -53,25 +54,22 @@
         let selected = null;
         let comboPiece = null;
 
-        const pValues = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900, s: 10 };
         const chessChars = { 1: {p:'♙',r:'♖',n:'♘',b:'♗',q:'♕',k:'♔'}, 2: {p:'♟',r:'♜',n:'♞',b:'♝',q:'♛',k:'♚'} };
+        const pieceValues = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 1000, s: 10 };
 
         function initGame(mode) {
             currentMode = mode;
             menu.style.display = 'none';
             gameView.style.display = 'flex';
-            boardEl.className = '';
-            turn = 1; comboPiece = null; selected = null;
-            statusEl.innerText = "Sizning navbatingiz";
+            boardEl.className = mode === 'xo' ? 'grid-3' : 'grid-8';
+            turn = 1; selected = null; comboPiece = null;
             
-            if (mode === 'xo') {
-                board = Array(9).fill(null);
-                boardEl.classList.add('grid-3');
-            } else {
-                board = Array(8).fill(null).map(() => Array(8).fill(null));
-                boardEl.classList.add('grid-8');
-                mode === 'chess' ? setupChess() : setupCheckers();
-            }
+            board = Array(mode === 'xo' ? 3 : 8).fill(null).map(() => Array(mode === 'xo' ? 3 : 8).fill(null));
+            if (mode === 'chess') setupChess();
+            else if (mode === 'checkers') setupCheckers();
+            else board = Array(9).fill(null); 
+
+            statusEl.innerText = "Sizning navbatingiz (Oqlar)";
             render();
         }
 
@@ -96,23 +94,26 @@
             boardEl.innerHTML = '';
             if (currentMode === 'xo') {
                 board.forEach((val, i) => {
-                    const cell = document.createElement('div');
-                    cell.className = 'cell xo-cell';
-                    cell.innerText = val || '';
-                    cell.style.color = val === 'X' ? '#60a5fa' : '#f87171';
-                    cell.onclick = () => handleXOClick(i);
+                    const cell = document.createElement('div'); cell.className = 'cell xo-cell';
+                    cell.innerText = val || ''; cell.onclick = () => handleXO(i);
                     boardEl.appendChild(cell);
                 });
-            } else {
-                for (let r=0; r<8; r++) for (let c=0; c<8; c++) {
+                return;
+            }
+
+            const kingPos = currentMode === 'chess' ? findKing(turn) : null;
+            const isChecked = kingPos ? isSquareAttacked(kingPos.r, kingPos.c, turn === 1 ? 2 : 1) : false;
+
+            for (let r=0; r<8; r++) {
+                for (let c=0; c<8; c++) {
                     const cell = document.createElement('div');
                     cell.className = `cell ${(r+c)%2===0 ? 'white' : 'black'}`;
-                    if (selected && selected.r === r && selected.c === c) cell.classList.add('selected');
                     const p = board[r][c];
                     if (p) {
                         if (currentMode === 'chess') {
                             cell.innerText = chessChars[p.p][p.type];
                             cell.style.color = p.p === 1 ? '#000' : '#ef4444';
+                            if (p.type === 'k' && isChecked) cell.classList.add('in-check');
                         } else {
                             const d = document.createElement('div');
                             d.className = `piece-shashka ${p.k ? 'king' : ''}`;
@@ -120,6 +121,7 @@
                             cell.appendChild(d);
                         }
                     }
+                    if (selected && selected.r === r && selected.c === c) cell.classList.add('selected');
                     cell.onclick = () => handleGridClick(r, c);
                     boardEl.appendChild(cell);
                 }
@@ -132,80 +134,82 @@
 
             if (comboPiece) {
                 if (r === comboPiece.r && c === comboPiece.c) return;
-                tryExecuteMove(comboPiece.r, comboPiece.c, r, c);
-                return;
+                processMove(comboPiece.r, comboPiece.c, r, c);
+            } else if (p && p.p === 1) {
+                selected = {r, c}; render();
+            } else if (selected) {
+                processMove(selected.r, selected.c, r, c);
             }
-
-            if (p && p.p === 1) { selected = {r, c}; render(); }
-            else if (selected) { tryExecuteMove(selected.r, selected.c, r, c); }
         }
 
-        function tryExecuteMove(fr, fc, tr, tc) {
-            const moves = getValidMoves(fr, fc);
+        function processMove(fr, fc, tr, tc) {
+            const moves = getLegalMoves(fr, fc);
             const move = moves.find(m => m.tr === tr && m.tc === tc);
+
             if (move) {
                 executeMove(move);
+                // Shashka Combo tekshiruvi
                 if (currentMode === 'checkers' && move.cap) {
-                    const nextCaps = getValidMoves(tr, tc).filter(m => m.cap);
+                    const nextCaps = getLegalMoves(tr, tc).filter(m => m.cap);
                     if (nextCaps.length > 0) {
                         comboPiece = { r: tr, c: tc };
                         selected = { r: tr, c: tc };
-                        statusEl.innerText = "Yana urishingiz kerak!";
-                        render();
-                        return;
+                        statusEl.innerText = "Kombinatsiyani davom ettiring!";
+                        render(); return;
                     }
                 }
-                comboPiece = null; selected = null;
-                if (turn === 2) {
-                    statusEl.innerText = "AI o'ylamoqda...";
-                    setTimeout(aiStep, 600);
-                }
+                comboPiece = null; selected = null; turn = 2;
+                render(); checkGameOver();
+                if (turn === 2) setTimeout(aiMove, 600);
             }
         }
 
-        function getValidMoves(r, c) {
+        function getLegalMoves(r, c) {
             const p = board[r][c];
-            if (!p) return [];
             let moves = [];
             if (currentMode === 'checkers') {
-                const dirs = [[1,1], [1,-1], [-1,1], [-1,-1]];
+                const dirs = [[1,1],[1,-1],[-1,1],[-1,-1]];
                 dirs.forEach(([dr, dc]) => {
-                    let nr = r+dr, nc = c+dc;
-                    if (nr>=0 && nr<8 && nc>=0 && nc<8 && !board[nr][nc]) {
-                        if (p.k || (p.p===1?dr<0:dr>0)) moves.push({fr:r, fc:c, tr:nr, tc:nc});
+                    let nr=r+dr, nc=c+dc;
+                    if(nr>=0 && nr<8 && nc>=0 && nc<8 && !board[nr][nc]) {
+                        if(p.k || (p.p===1?dr<0:dr>0)) moves.push({fr:r, fc:c, tr:nr, tc:nc});
                     }
-                    let ur = r+dr*2, uc = c+dc*2;
-                    if (ur>=0 && ur<8 && uc>=0 && uc<8 && !board[ur][uc]) {
-                        if (board[r+dr][c+dc] && board[r+dr][c+dc].p !== p.p)
-                            moves.push({fr:r, fc:c, tr:ur, tc:uc, cap:{r:r+dr, c:c+dc}});
+                    let ur=r+dr*2, uc=c+dc*2;
+                    if(ur>=0 && ur<8 && uc>=0 && uc<8 && !board[ur][uc] && board[r+dr][c+dc]?.p === (p.p===1?2:1)) {
+                        moves.push({fr:r, fc:c, tr:ur, tc:uc, cap:{r:r+dr, c:c+dc}});
                     }
                 });
                 const caps = moves.filter(m => m.cap);
-                return caps.length > 0 ? caps : moves;
+                return caps.length > 0 ? caps : (comboPiece ? [] : moves);
             } else {
                 for(let tr=0; tr<8; tr++) for(let tc=0; tc<8; tc++) {
-                    if (isChessMoveLegal(r, c, tr, tc)) moves.push({fr:r, fc:c, tr, tc});
+                    if (isChessMoveValid(r, c, tr, tc)) {
+                        // Shohni xavf ostida qoldirmaslik tekshiruvi
+                        const backup = board[tr][tc];
+                        board[tr][tc] = board[r][c]; board[r][c] = null;
+                        const k = findKing(turn);
+                        const safe = !isSquareAttacked(k.r, k.c, turn === 1 ? 2 : 1);
+                        board[r][c] = board[tr][tc]; board[tr][tc] = backup;
+                        if (safe) moves.push({fr:r, fc:c, tr, tc});
+                    }
                 }
-                return moves;
             }
+            return moves;
         }
 
-        function isChessMoveLegal(fr, fc, tr, tc) {
-            const p = board[fr][fc]; const target = board[tr][tc];
-            if (target && target.p === p.p) return false;
-            const dr = tr-fr, dc = tc-fc;
-            const adr = Math.abs(dr), adc = Math.abs(dc);
+        function isChessMoveValid(fr, fc, tr, tc) {
+            const p = board[fr][fc]; if (!p || board[tr][tc]?.p === p.p) return false;
+            const dr = tr-fr, dc = tc-fc, adr = Math.abs(dr), adc = Math.abs(dc);
             switch(p.type) {
                 case 'p': const s = p.p===1?-1:1; 
-                    if(dc===0 && !target) return dr===s || (dr===2*s && (fr===1||fr===6) && !board[fr+s][fc]);
-                    return adc===1 && dr===s && target;
+                    if(dc===0 && !board[tr][tc]) return dr===s || (dr===2*s && (fr===1||fr===6) && !board[fr+s][fc]);
+                    return adc===1 && dr===s && board[tr][tc];
                 case 'r': return (fr===tr || fc===tc) && isPathClear(fr,fc,tr,tc);
                 case 'n': return (adr===2 && adc===1) || (adr===1 && adc===2);
                 case 'b': return adr===adc && isPathClear(fr,fc,tr,tc);
                 case 'q': return (fr===tr || fc===tc || adr===adc) && isPathClear(fr,fc,tr,tc);
                 case 'k': return adr<=1 && adc<=1;
             }
-            return false;
         }
 
         function isPathClear(fr, fc, tr, tc) {
@@ -222,63 +226,80 @@
             if (currentMode==='checkers' && (m.tr===0||m.tr===7)) p.k = true;
             if (currentMode==='chess' && p.type==='p' && (m.tr===0||m.tr===7)) p.type = 'q';
             turn = turn === 1 ? 2 : 1;
-            render();
-            checkGameState();
         }
 
-        function aiStep() {
+        function aiMove() {
             let all = [];
             for(let r=0; r<8; r++) for(let c=0; c<8; c++) {
-                if(board[r][c] && board[r][c].p === 2) {
-                    const ms = getValidMoves(r, c);
-                    ms.forEach(m => {
-                        let score = Math.random() * 5;
-                        if(board[m.tr][m.tc]) score += pValues[board[m.tr][m.tc].type] * 10;
-                        if(currentMode==='checkers' && m.cap) score += 50;
-                        m.score = score;
-                    });
-                    all.push(...ms);
-                }
+                if(board[r][c]?.p === 2) all.push(...getLegalMoves(r, c));
             }
             if(all.length > 0) {
-                all.sort((a,b) => b.score - a.score);
-                const best = all[0];
-                executeMove(best);
-                if(currentMode==='checkers' && best.cap) {
-                    const next = getValidMoves(best.tr, best.tc).filter(m => m.cap);
-                    if(next.length > 0) { setTimeout(aiStep, 500); turn = 2; return; }
+                // Soddalashtirilgan AI mantiqi: Urishni birinchi qiladi
+                all.sort((a,b) => {
+                    let scoreA = board[a.tr][a.tc] ? pieceValues[board[a.tr][a.tc].type] : 0;
+                    let scoreB = board[b.tr][b.tc] ? pieceValues[board[b.tr][b.tc].type] : 0;
+                    if (a.cap) scoreA += 50; if (b.cap) scoreB += 50;
+                    return scoreB - scoreA;
+                });
+                const move = all[0];
+                executeMove(move);
+                if (currentMode === 'checkers' && move.cap) {
+                    const next = getLegalMoves(move.tr, move.tc).filter(m => m.cap);
+                    if(next.length > 0) { setTimeout(aiMove, 500); return; }
                 }
-                turn = 1; statusEl.innerText = "Sizning navbatingiz";
+                turn = 1; statusEl.innerText = "Sizning navbatingiz"; render(); checkGameOver();
             }
         }
 
-        function checkGameState() {
-            let kings = {1:0, 2:0}, pieces = {1:0, 2:0};
-            board.flat().forEach(p => { if(p){ pieces[p.p]++; if(p.type==='k') kings[p.p]++; } });
-            if (currentMode==='chess' && kings[2]===0) { statusEl.innerText = "SHOH VA MOT! SIZ YUTDINGIZ! 🎉"; turn = 0; }
-            if (currentMode==='chess' && kings[1]===0) { statusEl.innerText = "SHOH VA MOT! BOT YUTDI! 🤖"; turn = 0; }
-            if (currentMode==='checkers' && pieces[2]===0) { statusEl.innerText = "SIZ YUTDINGIZ! 🎉"; turn = 0; }
-            if (currentMode==='checkers' && pieces[1]===0) { statusEl.innerText = "BOT YUTDI! 🤖"; turn = 0; }
+        function findKing(p) {
+            for(let r=0; r<8; r++) for(let c=0; c<8; c++) if(board[r][c]?.type==='k' && board[r][c]?.p===p) return {r,c};
+            return {r:0, c:0};
         }
 
-        function handleXOClick(i) {
+        function isSquareAttacked(tr, tc, by) {
+            for(let r=0; r<8; r++) for(let c=0; c<8; c++) {
+                if(board[r][c]?.p === by) {
+                    const p = board[r][c];
+                    const dr = tr-r, dc = tc-c, adr = Math.abs(dr), adc = Math.abs(dc);
+                    if (p.type==='p') { if(adc===1 && dr===(by===1?-1:1)) return true; }
+                    else if (isChessMoveValid(r, c, tr, tc)) return true;
+                }
+            }
+            return false;
+        }
+
+        function checkGameOver() {
+            let p1=0, p2=0, k1=0, k2=0;
+            board.flat().forEach(p => { if(p?.p===1){p1++; if(p.type==='k')k1++;} if(p?.p===2){p2++; if(p.type==='k')k2++;} });
+            if (currentMode==='chess') {
+                if(k2===0) { statusEl.innerText="SHOH VA MOT! SIZ YUTDINGIZ!"; turn=0; }
+                if(k1===0) { statusEl.innerText="SHOH VA MOT! AI YUTDI!"; turn=0; }
+            } else {
+                if(p2===0) { statusEl.innerText="SIZ YUTDINGIZ!"; turn=0; }
+                if(p1===0) { statusEl.innerText="AI YUTDI!"; turn=0; }
+            }
+        }
+
+        function handleXO(i) {
             if (board[i] || turn !== 1) return;
-            board[i] = 'X'; turn = 2; render();
-            if(!checkXOWin()) setTimeout(() => {
-                const empty = board.map((v, i) => v === null ? i : null).filter(v => v !== null);
-                if(empty.length>0) { board[empty[Math.floor(Math.random()*empty.length)]]='O'; turn=1; render(); checkXOWin(); }
-            }, 500);
-        }
-
-        function checkXOWin() {
-            const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-            for(let l of lines) if(board[l[0]] && board[l[0]]===board[l[1]] && board[l[0]]===board[l[2]]) {
-                statusEl.innerText = board[l[0]]==='X'?"SIZ YUTDINGIZ! 🎉":"BOT YUTDI! 🤖"; turn=0; return true;
+            board[i] = 'X'; renderXO();
+            if(!checkXOWin()) {
+                turn = 2; setTimeout(() => {
+                    const empty = board.map((v,i)=>v===null?i:null).filter(v=>v!==null);
+                    if(empty.length>0) board[empty[Math.floor(Math.random()*empty.length)]]='O';
+                    turn = 1; renderXO(); checkXOWin();
+                }, 500);
             }
-            if(!board.includes(null)){ statusEl.innerText="DURANG! 🤝"; return true; }
+        }
+        function renderXO() { board.forEach((v, i) => boardEl.children[i].innerText = v || ''); }
+        function checkXOWin() {
+            const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            for(let w of wins) if(board[w[0]] && board[w[0]]===board[w[1]] && board[w[0]]===board[w[2]]) {
+                statusEl.innerText = board[w[0]] === 'X' ? "SIZ YUTDINGIZ!" : "AI YUTDI!"; turn=0; return true;
+            }
+            if(!board.includes(null)) { statusEl.innerText="DURANG!"; return true; }
             return false;
         }
     </script>
 </body>
 </html>
-
