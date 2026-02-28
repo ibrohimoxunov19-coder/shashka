@@ -2,210 +2,232 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <title>Rossiya Shashkasi AI - Final</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mega Game Portal: Chess, Checkers & X-O</title>
     <style>
-        body { background: #1a1a1a; display: flex; flex-direction: column; align-items: center; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
-        #board { display: grid; grid-template-columns: repeat(8, 60px); grid-template-rows: repeat(8, 60px); border: 10px solid #3e2723; box-shadow: 0 0 50px rgba(0,0,0,0.8); background: #eeeed2; }
-        .cell { width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; cursor: pointer; }
-        .black { background: #769656; }
-        .piece { width: 50px; height: 50px; border-radius: 50%; position: relative; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 2px solid rgba(0,0,0,0.2); }
-        .p1 { background: #ffffff; box-shadow: 0 5px 0 #bdc3c7; } /* Oqlar - Siz */
-        .p2 { background: #e74c3c; box-shadow: 0 5px 0 #c0392b; } /* Qizillar - AI */
-        .selected { outline: 5px solid #f1c40f; transform: scale(1.1); z-index: 10; }
-        .king::after { content: '⭐'; display: block; text-align: center; line-height: 50px; color: #f1c40f; font-size: 24px; }
-        #status { font-size: 1.5rem; margin: 20px; padding: 10px 30px; background: #2c3e50; border-radius: 50px; min-width: 300px; text-align: center; }
-        .btn-restart { margin-top: 15px; padding: 12px 25px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; display: none; }
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #10b981; --white-cell: #f8fafc; --black-cell: #64748b; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; min-height: 100vh; }
+        
+        /* Menu */
+        #main-menu { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; }
+        .menu-btn { width: 280px; padding: 20px; font-size: 1.4rem; cursor: pointer; border: none; border-radius: 15px; background: var(--card); color: white; transition: 0.3s; border: 1px solid #334155; }
+        .menu-btn:hover { background: var(--accent); transform: translateY(-5px); box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2); }
+
+        /* Game View */
+        #game-view { display: none; flex-direction: column; align-items: center; padding: 20px; width: 100%; }
+        .back-btn { background: #ef4444; color: white; border: none; padding: 10px 25px; border-radius: 8px; cursor: pointer; margin-bottom: 20px; font-weight: bold; }
+        #status { margin-bottom: 20px; font-size: 1.3rem; padding: 10px 30px; background: var(--card); border-radius: 50px; border: 1px solid #334155; }
+
+        /* Board Styles */
+        #board { display: grid; border: 5px solid #334155; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .cell { display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; }
+        
+        /* X-O Specific */
+        .xo-cell { width: 100px; height: 100px; font-size: 3rem; background: var(--card); border: 2px solid #334155; }
+        .xo-cell:hover { background: #334155; }
+        
+        /* Chess/Checkers Specific */
+        .grid-8 { grid-template-columns: repeat(8, 60px); grid-template-rows: repeat(8, 60px); }
+        .c-cell { width: 60px; height: 60px; font-size: 40px; }
+        .white { background: var(--white-cell); }
+        .black { background: var(--black-cell); }
+        .selected { background: #fbbf24 !important; }
+        
+        .piece-shashka { width: 80%; height: 80%; border-radius: 50%; border: 2px solid #333; }
+        .king::after { content: '⭐'; font-size: 20px; color: gold; display: flex; justify-content: center; align-items: center; height: 100%; }
     </style>
 </head>
 <body>
-    <h1>Rossiya Shashkasi</h1>
-    <div id="status">Sizning navbatingiz</div>
-    <div id="board"></div>
-    <button class="btn-restart" id="restartBtn" onclick="init()">Qayta boshlash</button>
+
+    <div id="main-menu">
+        <h1 style="font-size: 2.5rem; margin-bottom: 30px;">O'yinlar Portali</h1>
+        <button class="menu-btn" onclick="initGame('chess')">♟️ Shaxmat AI</button>
+        <button class="menu-btn" onclick="initGame('checkers')">🔴 Shashka AI</button>
+        <button class="menu-btn" onclick="initGame('xo')">❌ Tic-Tac-Toe AI</button>
+    </div>
+
+    <div id="game-view">
+        <button class="back-btn" onclick="location.reload()">⬅ ASOSIY MENYU</button>
+        <div id="status">Sizning navbatingiz</div>
+        <div id="board"></div>
+    </div>
 
     <script>
-        const boardElement = document.getElementById('board');
-        const statusText = document.getElementById('status');
-        const restartBtn = document.getElementById('restartBtn');
-        let board = [];
-        let selected = null;
-        let turn = 1; 
-        let comboPiece = null;
+        const boardEl = document.getElementById('board');
+        const statusEl = document.getElementById('status');
+        const menu = document.getElementById('main-menu');
+        const gameView = document.getElementById('game-view');
 
-        function init() {
-            board = Array(8).fill(null).map(() => Array(8).fill(null));
-            for (let r = 0; r < 8; r++) {
-                for (let c = 0; c < 8; c++) {
-                    if ((r + c) % 2 !== 0) {
-                        if (r < 3) board[r][c] = { p: 2, k: false };
-                        else if (r > 4) board[r][c] = { p: 1, k: false };
-                    }
+        let board = [];
+        let turn = 1; // 1: Player, 2: AI
+        let currentMode = '';
+        let selected = null;
+
+        const pieceValues = { 'p': 10, 'n': 30, 'b': 30, 'r': 50, 'q': 90, 'k': 900, 's': 10 };
+        const chessChars = { 1: {p:'♙',r:'♖',n:'♘',b:'♗',q:'♕',k:'♔'}, 2: {p:'♟',r:'♜',n:'♞',b:'♝',q:'♛',k:'♚'} };
+
+        function initGame(mode) {
+            currentMode = mode;
+            menu.style.display = 'none';
+            gameView.style.display = 'flex';
+            boardEl.className = '';
+            
+            if (mode === 'xo') {
+                board = Array(9).fill(null);
+                boardEl.style.gridTemplateColumns = 'repeat(3, 100px)';
+                boardEl.style.gridTemplateRows = 'repeat(3, 100px)';
+            } else {
+                board = Array(8).fill(null).map(() => Array(8).fill(null));
+                boardEl.classList.add('grid-8');
+                if (mode === 'chess') setupChess();
+                else setupCheckers();
+            }
+            render();
+        }
+
+        function setupChess() {
+            const layout = ['r','n','b','q','k','b','n','r'];
+            for(let i=0; i<8; i++) {
+                board[0][i] = { type: layout[i], p: 2 }; board[1][i] = { type: 'p', p: 2 };
+                board[6][i] = { type: 'p', p: 1 }; board[7][i] = { type: layout[i], p: 1 };
+            }
+        }
+
+        function setupCheckers() {
+            for(let r=0; r<8; r++) for(let c=0; c<8; c++) {
+                if((r+c)%2!==0) {
+                    if(r<3) board[r][c] = { type: 's', p: 2, k: false };
+                    if(r>4) board[r][c] = { type: 's', p: 1, k: false };
                 }
             }
-            turn = 1;
-            selected = null;
-            comboPiece = null;
-            restartBtn.style.display = 'none';
-            statusText.innerText = "Sizning navbatingiz";
-            render();
         }
 
         function render() {
-            boardElement.innerHTML = '';
-            for (let r = 0; r < 8; r++) {
-                for (let c = 0; c < 8; c++) {
+            boardEl.innerHTML = '';
+            if (currentMode === 'xo') {
+                board.forEach((val, i) => {
                     const cell = document.createElement('div');
-                    cell.className = `cell ${(r + c) % 2 === 0 ? 'white' : 'black'}`;
-                    cell.onclick = () => handleClick(r, c);
-                    if (board[r][c]) {
-                        const p = document.createElement('div');
-                        p.className = `piece p${board[r][c].p} ${board[r][c].k ? 'king' : ''}`;
-                        if (selected && selected.r === r && selected.c === c) p.classList.add('selected');
-                        cell.appendChild(p);
-                    }
-                    boardElement.appendChild(cell);
-                }
-            }
-        }
-
-        function handleClick(r, c) {
-            if (turn !== 1) return;
-
-            // Agar ketma-ket urish davom etayotgan bo'lsa
-            if (comboPiece) {
-                if (r === comboPiece.r && c === comboPiece.c) return;
-                executePlayerMove(r, c);
-                return;
-            }
-
-            if (board[r][c] && board[r][c].p === 1) {
-                selected = { r, c };
-                render();
-            } else if (selected) {
-                executePlayerMove(r, c);
-            }
-        }
-
-        function executePlayerMove(tr, tc) {
-            const moves = getValidMoves(selected.r, selected.c);
-            const move = moves.find(m => m.tr === tr && m.tc === tc);
-
-            if (move) {
-                applyMove(move);
-                if (move.capture) {
-                    const nextJumps = getValidMoves(tr, tc).filter(m => m.capture);
-                    if (nextJumps.length > 0) {
-                        selected = { r: tr, c: tc };
-                        comboPiece = { r: tr, c: tc };
-                        statusText.innerText = "Yana urishingiz kerak!";
-                        render();
-                        return;
-                    }
-                }
-                finishTurn();
-            }
-        }
-
-        function finishTurn() {
-            selected = null;
-            comboPiece = null;
-            turn = turn === 1 ? 2 : 1;
-            render();
-            if (!checkGameOver()) {
-                if (turn === 2) {
-                    statusText.innerText = "AI o'ylamoqda...";
-                    setTimeout(aiMove, 600);
-                } else {
-                    statusText.innerText = "Sizning navbatingiz";
-                }
-            }
-        }
-
-        function getValidMoves(r, c) {
-            const piece = board[r][c];
-            if (!piece) return [];
-            const moves = [];
-            const dirs = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
-
-            dirs.forEach(([dr, dc]) => {
-                let nr = r + dr, nc = c + dc;
-                let opponentFound = null;
-
-                while (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
-                    const target = board[nr][nc];
-                    if (!target) {
-                        if (!opponentFound) {
-                            if (piece.k || (piece.p === 1 && dr < 0) || (piece.p === 2 && dr > 0)) {
-                                moves.push({ fr: r, fc: c, tr: nr, tc: nc, capture: null });
-                            }
+                    cell.className = 'cell xo-cell';
+                    cell.innerText = val || '';
+                    cell.style.color = val === 'X' ? '#60a5fa' : '#f87171';
+                    cell.onclick = () => handleXOClick(i);
+                    boardEl.appendChild(cell);
+                });
+            } else {
+                for (let r=0; r<8; r++) for (let c=0; c<8; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = `cell c-cell ${(r+c)%2===0 ? 'white' : 'black'}`;
+                    if (selected && selected.r === r && selected.c === c) cell.classList.add('selected');
+                    const p = board[r][c];
+                    if (p) {
+                        if (currentMode === 'chess') {
+                            cell.innerText = chessChars[p.p][p.type];
+                            cell.style.color = p.p === 1 ? '#000' : '#d63031';
                         } else {
-                            moves.push({ fr: r, fc: c, tr: nr, tc: nc, capture: opponentFound });
+                            const d = document.createElement('div');
+                            d.className = `piece-shashka ${p.k ? 'king' : ''}`;
+                            d.style.background = p.p === 1 ? '#fff' : '#ef4444';
+                            cell.appendChild(d);
                         }
-                        if (!piece.k) break;
-                    } else if (target.p !== piece.p && !opponentFound) {
-                        opponentFound = { r: nr, c: nc };
-                    } else break;
-                    nr += dr; nc += dc;
-                }
-            });
-
-            const captures = moves.filter(m => m.capture);
-            return captures.length > 0 ? captures : moves;
-        }
-
-        function applyMove(move) {
-            board[move.tr][move.tc] = board[move.fr][move.fc];
-            board[move.fr][move.fc] = null;
-            if (move.capture) board[move.capture.r][move.capture.c] = null;
-            if ((move.tr === 0 && board[move.tr][move.tc].p === 1) || (move.tr === 7 && board[move.tr][move.tc].p === 2)) {
-                board[move.tr][move.tc].k = true;
-            }
-        }
-
-        function aiMove() {
-            let allPossibleMoves = [];
-            for (let r = 0; r < 8; r++) {
-                for (let c = 0; c < 8; c++) {
-                    if (board[r][c] && board[r][c].p === 2) {
-                        allPossibleMoves.push(...getValidMoves(r, c));
                     }
+                    cell.onclick = () => handleGridClick(r, c);
+                    boardEl.appendChild(cell);
                 }
             }
-
-            const captures = allPossibleMoves.filter(m => m.capture);
-            const move = captures.length > 0 ? captures[Math.floor(Math.random() * captures.length)] : allPossibleMoves[Math.floor(Math.random() * allPossibleMoves.length)];
-
-            if (move) {
-                applyMove(move);
-                if (move.capture && getValidMoves(move.tr, move.tc).filter(m => m.capture).length > 0) {
-                    render();
-                    setTimeout(aiMove, 500);
-                    return;
-                }
-            }
-            finishTurn();
         }
 
-        function checkGameOver() {
-            let p1Moves = 0, p2Moves = 0;
-            for (let r = 0; r < 8; r++) {
-                for (let c = 0; c < 8; c++) {
-                    if (board[r][c]) {
-                        const m = getValidMoves(r, c).length;
-                        if (board[r][c].p === 1) p1Moves += m;
-                        else p2Moves += m;
-                    }
+        // --- X-O LOGIC ---
+        function handleXOClick(i) {
+            if (board[i] || turn !== 1) return;
+            board[i] = 'X';
+            turn = 2;
+            render();
+            if (!checkXOWin()) setTimeout(aiXOMove, 500);
+        }
+
+        function aiXOMove() {
+            const empty = board.map((v, i) => v === null ? i : null).filter(v => v !== null);
+            if (empty.length > 0) {
+                // Oddiy AI: Bo'sh joylardan birini tanlaydi
+                board[empty[Math.floor(Math.random() * empty.length)]] = 'O';
+                turn = 1;
+                render();
+                checkXOWin();
+            }
+        }
+
+        function checkXOWin() {
+            const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            for (let l of lines) {
+                if (board[l[0]] && board[l[0]] === board[l[1]] && board[l[0]] === board[l[2]]) {
+                    statusEl.innerText = board[l[0]] === 'X' ? "SIZ YUTDINGIZ! 🎉" : "BOT YUTDI! 🤖";
+                    turn = 0; return true;
                 }
             }
-            if (p1Moves === 0) { statusText.innerText = "AI YUTDI! 🤖"; restartBtn.style.display = "block"; return true; }
-            if (p2Moves === 0) { statusText.innerText = "SIZ YUTDINGIZ! 🎉"; restartBtn.style.display = "block"; return true; }
+            if (!board.includes(null)) { statusEl.innerText = "DURANG! 🤝"; return true; }
             return false;
         }
 
-        init();
+        // --- CHESS/CHECKERS LOGIC ---
+        function handleGridClick(r, c) {
+            if (turn !== 1) return;
+            const p = board[r][c];
+            if (p && p.p === 1) { selected = {r, c}; render(); }
+            else if (selected) {
+                if (isValidMove(selected.r, selected.c, r, c)) {
+                    executeMove(selected.r, selected.c, r, c);
+                    selected = null;
+                    turn = 2;
+                    statusEl.innerText = "Bot o'ylamoqda...";
+                    setTimeout(aiGridMove, 600);
+                }
+            }
+        }
+
+        function executeMove(fr, fc, tr, tc) {
+            const p = board[fr][fc];
+            if (currentMode === 'checkers' && Math.abs(tr-fr) === 2) board[(fr+tr)/2][(fc+tc)/2] = null;
+            board[tr][tc] = p;
+            board[fr][fc] = null;
+            if ((tr === 0 || tr === 7) && p.type === 'p') p.type = 'q';
+            if ((tr === 0 || tr === 7) && p.type === 's') p.k = true;
+            render();
+        }
+
+        function isValidMove(fr, fc, tr, tc) {
+            const p = board[fr][fc]; const target = board[tr][tc];
+            if (target && target.p === p.p) return false;
+            const dr = tr-fr, dc = tc-fc;
+            if (currentMode === 'chess') {
+                if (p.type === 'p') return dc === 0 && dr === (p.p === 1 ? -1 : 1) && !target;
+                if (p.type === 'n') return (Math.abs(dr)===2 && Math.abs(dc)===1) || (Math.abs(dr)===1 && Math.abs(dc)===2);
+                return true; // Soddalashtirilgan shaxmat mantiqi
+            } else {
+                if (Math.abs(dr) === 1 && Math.abs(dc) === 1 && !target) return p.k || (p.p===1?dr<0:dr>0);
+                if (Math.abs(dr) === 2 && Math.abs(dc) === 2 && !target) return board[(fr+tr)/2][(fc+tc)/2]?.p === (p.p===1?2:1);
+            }
+            return false;
+        }
+
+        function aiGridMove() {
+            let moves = [];
+            for(let r=0; r<8; r++) for(let c=0; c<8; c++) {
+                if(board[r][c] && board[r][c].p === 2) {
+                    for(let tr=0; tr<8; tr++) for(let tc=0; tc<8; tc++) {
+                        if(isValidMove(r, c, tr, tc)) moves.push({fr:r, fc:c, tr, tc});
+                    }
+                }
+            }
+            if(moves.length > 0) {
+                const m = moves[Math.floor(Math.random()*moves.length)];
+                executeMove(m.fr, m.fc, m.tr, m.tc);
+                turn = 1;
+                statusEl.innerText = "Sizning navbatingiz";
+            }
+        }
+
     </script>
 </body>
 </html>
-
 
 
