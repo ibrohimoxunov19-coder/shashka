@@ -3,42 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gamer Pro Hub v4.1 - Ultimate AI</title>
+    <title>Multi-Game AI Portal v5</title>
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --accent: #10b981; --white-cell: #f1f5f9; --black-cell: #475569; }
         body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; min-height: 100vh; }
-        #main-menu { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; }
-        .menu-btn { width: 320px; padding: 25px; font-size: 1.5rem; cursor: pointer; border: none; border-radius: 20px; background: var(--card); color: white; transition: 0.3s; border: 2px solid #334155; box-shadow: 0 10px 15px rgba(0,0,0,0.3); }
-        .menu-btn:hover { background: var(--accent); transform: translateY(-5px); box-shadow: 0 15px 25px rgba(16, 185, 129, 0.4); }
-        #game-view { display: none; flex-direction: column; align-items: center; padding: 20px; width: 100%; animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        #status { margin-bottom: 20px; font-size: 1.4rem; padding: 15px 40px; background: var(--card); border-radius: 50px; border: 3px solid #334155; color: #fbbf24; text-align: center; font-weight: bold; min-width: 350px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        #board { display: grid; border: 12px solid #1e293b; border-radius: 12px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); }
-        .cell { width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; cursor: pointer; position: relative; }
+        #main-menu { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; }
+        .menu-btn { width: 320px; padding: 22px; font-size: 1.4rem; cursor: pointer; border: none; border-radius: 15px; background: var(--card); color: white; transition: 0.3s; border: 2px solid #334155; }
+        .menu-btn:hover { background: var(--accent); transform: scale(1.03); }
+        #game-view { display: none; flex-direction: column; align-items: center; padding: 20px; width: 100%; }
+        #status { margin-bottom: 20px; font-size: 1.3rem; padding: 12px 30px; background: var(--card); border-radius: 50px; border: 2px solid #334155; color: #fbbf24; text-align: center; font-weight: bold; min-width: 300px; }
+        #board { display: grid; border: 10px solid #1e293b; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); background: #334155; }
+        .cell { width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 40px; position: relative; transition: 0.2s; }
         .white { background: var(--white-cell); }
         .black { background: var(--black-cell); }
         .selected { background: #fbbf24 !important; }
-        .piece-shashka { width: 82%; height: 82%; border-radius: 50%; border: 3px solid rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 5px 10px rgba(0,0,0,0.4); }
-        .king::after { content: '⭐'; font-size: 26px; color: gold; filter: drop-shadow(0 0 3px black); }
+        .check { background: #f87171 !important; } /* Shoh berilganda qizil bo'ladi */
+        .piece-shashka { width: 80%; height: 80%; border-radius: 50%; border: 3px solid rgba(0,0,0,0.2); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .king::after { content: '⭐'; font-size: 20px; color: gold; position: absolute; }
         .grid-8 { grid-template-columns: repeat(8, 60px); grid-template-rows: repeat(8, 60px); }
-        .back-btn { background: #ef4444; color: white; border: none; padding: 12px 35px; border-radius: 12px; cursor: pointer; margin-bottom: 15px; font-weight: bold; transition: 0.3s; }
-        .back-btn:hover { background: #dc2626; }
-        .error { border-color: #f87171 !important; color: #f87171 !important; animation: shake 0.5s; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-8px); } 80% { transform: translateX(8px); } }
-        @media (max-width: 550px) { .cell { width: 45px; height: 45px; } .grid-8 { grid-template-columns: repeat(8, 45px); grid-template-rows: repeat(8, 45px); } }
+        .grid-3 { grid-template-columns: repeat(3, 100px); grid-template-rows: repeat(3, 100px); }
+        .xo-cell { width: 100px; height: 100px; font-size: 70px; background: var(--card); border: 2px solid #334155; }
+        .back-btn { background: #ef4444; color: white; border: none; padding: 10px 25px; border-radius: 10px; cursor: pointer; margin-bottom: 15px; font-weight: bold; }
+        .error { color: #f87171 !important; animation: shake 0.3s; }
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } 100% { transform: translateX(0); } }
     </style>
 </head>
 <body>
 
 <div id="main-menu">
-    <h1 style="color: var(--accent); font-size: 3rem; margin-bottom: 40px; text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);">GAMER PRO HUB</h1>
+    <h1 style="color: var(--accent);">AI GAME HUB</h1>
     <button class="menu-btn" onclick="initGame('checkers')">🔴 Rossiya Shashkasi</button>
-    <button class="menu-btn" onclick="initGame('chess')">♟️ Professional Shaxmat</button>
+    <button class="menu-btn" onclick="initGame('chess')">♟️ Shaxmat (Shoh/Mot)</button>
+    <button class="menu-btn" onclick="initGame('xo')">❌ Tic-Tac-Toe (X-O)</button>
 </div>
 
 <div id="game-view">
-    <button class="back-btn" onclick="location.reload()">⬅ ASOSIY MENYU</button>
-    <div id="status">O'yin boshlandi! Navbatingiz...</div>
+    <button class="back-btn" onclick="location.reload()">⬅ MENYU</button>
+    <div id="status">Navbatingiz...</div>
     <div id="board"></div>
 </div>
 
@@ -49,7 +50,7 @@
     const gameView = document.getElementById('game-view');
 
     let board = [];
-    let turn = 1; 
+    let turn = 1; // 1: Siz, 2: AI
     let currentMode = '';
     let selected = null;
     let comboPiece = null;
@@ -58,10 +59,16 @@
         currentMode = mode;
         menu.style.display = 'none';
         gameView.style.display = 'flex';
-        boardEl.className = 'grid-8';
         turn = 1; selected = null; comboPiece = null;
-        board = Array(8).fill(null).map(() => Array(8).fill(null));
-        if (mode === 'checkers') setupCheckers(); else setupChess();
+        
+        if (mode === 'xo') {
+            board = Array(9).fill(null);
+            boardEl.className = 'grid-3';
+        } else {
+            board = Array(8).fill(null).map(() => Array(8).fill(null));
+            boardEl.className = 'grid-8';
+            if (mode === 'checkers') setupCheckers(); else setupChess();
+        }
         render();
     }
 
@@ -84,11 +91,21 @@
 
     function render() {
         boardEl.innerHTML = '';
-        for (let r=0; r<8; r++) {
-            for (let c=0; c<8; c++) {
+        const checkPos = currentMode === 'chess' ? getKingStatus(turn) : null;
+
+        board.forEach((row, r) => {
+            if (currentMode === 'xo') {
+                const val = row; // xo da board 1D array
+                const cell = document.createElement('div');
+                cell.className = 'cell xo-cell';
+                cell.innerText = val || '';
+                cell.onclick = () => handleXOMove(r);
+                boardEl.appendChild(cell);
+                return;
+            }
+            row.forEach((p, c) => {
                 const cell = document.createElement('div');
                 cell.className = `cell ${(r+c)%2===0 ? 'white' : 'black'}`;
-                const p = board[r][c];
                 if (p) {
                     if (currentMode === 'checkers') {
                         const d = document.createElement('div');
@@ -99,30 +116,22 @@
                         const chars = { 1: {p:'♙',r:'♖',n:'♘',b:'♗',q:'♕',k:'♔'}, 2: {p:'♟',r:'♜',n:'♞',b:'♝',q:'♛',k:'♚'} };
                         cell.innerText = chars[p.p][p.type];
                         cell.style.color = p.p === 1 ? '#000' : '#ef4444';
-                        cell.style.fontSize = "45px";
+                        if (p.type === 'k' && checkPos) cell.classList.add('check');
                     }
                 }
                 if (selected && selected.r === r && selected.c === c) cell.classList.add('selected');
-                cell.onclick = () => handleCellClick(r, c);
+                cell.onclick = () => handleMove(r, c);
                 boardEl.appendChild(cell);
-            }
-        }
+            });
+        });
     }
 
-    function handleCellClick(r, c) {
+    function handleMove(r, c) {
         if (turn !== 1) return;
         const p = board[r][c];
 
         if (p && p.p === 1) {
-            if (comboPiece && (r !== comboPiece.r || c !== comboPiece.c)) {
-                showStatus("⚠️ Yana urishingiz kerak!", true); return;
-            }
-            const allCaps = getAllCaptures(1);
-            const thisMoves = getLegalMoves(r, c);
-            if (allCaps.length > 0 && !thisMoves.some(m => m.cap)) {
-                showStatus("🚨 Urish majburiy! Yuting!", true); return;
-            }
-            statusEl.classList.remove('error');
+            if (comboPiece && (r !== comboPiece.r || c !== comboPiece.c)) return;
             selected = {r, c}; render();
         } else if (selected) {
             const moves = getLegalMoves(selected.r, selected.c);
@@ -131,32 +140,23 @@
                 executeMove(selected.r, selected.c, r, c, move);
                 if (currentMode === 'checkers' && move.cap) {
                     const next = getLegalMoves(r, c).filter(m => m.cap);
-                    if (next.length > 0) {
-                        comboPiece = {r, c}; selected = {r, c};
-                        showStatus("🔥 Davom eting! Yana yutish imkoni...");
-                        render(); return;
-                    }
+                    if (next.length > 0) { comboPiece = {r, c}; selected = {r, c}; render(); return; }
                 }
-                comboPiece = null; selected = null; turn = 2;
-                render(); checkWin();
-                if (turn === 2) {
-                    showStatus("🤖 AI o'ylamoqda...");
-                    setTimeout(aiMove, 800);
-                }
+                comboPiece = null; selected = null; turn = 2; render();
+                setTimeout(aiMove, 600);
             }
         }
     }
 
     function getLegalMoves(r, c) {
         const p = board[r][c];
-        if (!p) return [];
         let moves = [];
         const dirs = [[1,1], [1,-1], [-1,1], [-1,-1]];
 
         if (currentMode === 'checkers') {
             dirs.forEach(([dr, dc]) => {
                 let nr = r + dr, nc = c + dc;
-                if (p.k) { // DAMKA: Uzoq diagonal bo'ylab yurish va urish
+                if (p.k) { // DAMKA Rossiya qoidasi
                     let enemy = null;
                     while (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
                         if (!board[nr][nc]) {
@@ -168,94 +168,102 @@
                         }
                         nr += dr; nc += dc;
                     }
-                } else { // ODDIY TOSHLAR: Orqaga urish imkoniyati bilan
+                } else { // Oddiy tosh
                     if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
                         if (!board[nr][nc] && !comboPiece) {
                             if (p.p === 1 && dr < 0) moves.push({tr: nr, tc: nc});
                             if (p.p === 2 && dr > 0) moves.push({tr: nr, tc: nc});
                         } else if (board[nr][nc] && board[nr][nc].p !== p.p) {
                             let ur = nr + dr, uc = nc + dc;
-                            if (ur >= 0 && ur < 8 && uc >= 0 && uc < 8 && !board[ur][uc]) {
-                                moves.push({tr: ur, tc: uc, cap: {r: nr, c: nc}});
-                            }
+                            if (ur >= 0 && ur < 8 && uc >= 0 && uc < 8 && !board[ur][uc]) moves.push({tr: ur, tc: uc, cap: {r: nr, c: nc}});
                         }
                     }
                 }
             });
-        } else { // SHAXMAT
+        } else if (currentMode === 'chess') {
             for(let tr=0; tr<8; tr++) for(let tc=0; tc<8; tc++) {
-                if(isChessValid(r, c, tr, tc)) moves.push({tr, tc});
+                if(isChessValid(r, c, tr, tc)) {
+                    // Shohni xavfga qo'ymaslikni tekshirish
+                    const backup = board[tr][tc]; board[tr][tc] = board[r][c]; board[r][c] = null;
+                    const check = getKingStatus(p.p);
+                    board[r][c] = board[tr][tc]; board[tr][tc] = backup;
+                    if (!check) moves.push({tr, tc});
+                }
             }
         }
-        const caps = moves.filter(m => m.cap);
-        return caps.length > 0 ? caps : (comboPiece ? [] : moves);
+        return moves;
+    }
+
+    function isChessValid(fr, fc, tr, tc) {
+        const p = board[fr][fc]; if (!p || (board[tr][tc] && board[tr][tc].p === p.p)) return false;
+        const dr = tr - fr, dc = tc - fc, adr = Math.abs(dr), adc = Math.abs(dc);
+        if (p.type === 'p') {
+            const s = p.p === 1 ? -1 : 1;
+            if (dc === 0 && !board[tr][tc]) return dr === s || (dr === 2*s && (fr === 1 || fr === 6));
+            return adc === 1 && dr === s && board[tr][tc];
+        }
+        if (p.type === 'r') return (fr === tr || fc === tc) && isPathClear(fr, fc, tr, tc);
+        if (p.type === 'n') return (adr === 2 && adc === 1) || (adr === 1 && adc === 2);
+        if (p.type === 'b') return adr === adc && isPathClear(fr, fc, tr, tc);
+        if (p.type === 'q') return (adr === adc || fr === tr || fc === tc) && isPathClear(fr, fc, tr, tc);
+        if (p.type === 'k') return adr <= 1 && adc <= 1;
+        return false;
+    }
+
+    function isPathClear(fr, fc, tr, tc) {
+        const dr = Math.sign(tr-fr), dc = Math.sign(tc-fc);
+        let r = fr + dr, c = fc + dc;
+        while (r !== tr || c !== tc) { if (board[r][c]) return false; r += dr; c += dc; }
+        return true;
+    }
+
+    function getKingStatus(p) {
+        let kr, kc;
+        for(let r=0; r<8; r++) for(let c=0; c<8; c++) if(board[r][c]?.type === 'k' && board[r][c]?.p === p) { kr=r; kc=c; }
+        for(let r=0; r<8; r++) for(let c=0; c<8; c++) if(board[r][c] && board[r][c].p !== p) if(isChessValid(r, c, kr, kc)) return true;
+        return false;
     }
 
     function executeMove(fr, fc, tr, tc, move) {
         board[tr][tc] = board[fr][fc];
         board[fr][fc] = null;
         if (move.cap) board[move.cap.r][move.cap.c] = null;
-        // Damka bo'lish (Rossiya qoidasi: urish paytida ham damka bo'lsa combo davom etadi)
-        if (currentMode === 'checkers' && ((turn === 1 && tr === 0) || (turn === 2 && tr === 7))) {
-            board[tr][tc].k = true;
-        }
+        if (currentMode === 'checkers' && (tr === 0 || tr === 7)) board[tr][tc].k = true;
     }
 
     function aiMove() {
+        if (currentMode === 'xo') return;
         let all = [];
-        for(let r=0; r<8; r++) for(let c=0; c<8; c++) {
-            if(board[r][c]?.p === 2) {
-                getLegalMoves(r, c).forEach(m => all.push({fr:r, fc:c, ...m}));
-            }
+        for(let r=0; r<8; r++) for(let c=0; c<8; c++) if(board[r][c]?.p === 2) {
+            getLegalMoves(r, c).forEach(m => all.push({fr:r, fc:c, ...m}));
         }
         if (all.length > 0) {
-            // AI eng yaxshi yurishni tanlaydi (Urish birinchi, Damka bo'lish ikkinchi)
-            all.sort((a, b) => {
-                let sA = a.cap ? 1000 : 0;
-                let sB = b.cap ? 1000 : 0;
-                if (a.tr === 7) sA += 500;
-                if (board[a.fr][a.fc].k) sA += 100;
-                return sB - sA;
-            });
+            all.sort((a,b) => (b.cap ? 1 : 0) - (a.cap ? 1 : 0));
             const m = all[0];
             executeMove(m.fr, m.fc, m.tr, m.tc, m);
             if (currentMode === 'checkers' && m.cap && getLegalMoves(m.tr, m.tc).filter(x => x.cap).length > 0) {
                 setTimeout(aiMove, 600); return;
             }
         }
-        turn = 1; showStatus("Sizning navbatingiz"); render(); checkWin();
+        turn = 1; render();
     }
 
-    function getAllCaptures(p) {
-        let res = [];
-        for(let r=0; r<8; r++) for(let c=0; c<8; c++) {
-            if(board[r][c]?.p === p) res.push(...getLegalMoves(r, c).filter(m => m.cap));
+    function handleXOMove(i) {
+        if (board[i] || turn !== 1) return;
+        board[i] = 'X'; turn = 2; render();
+        if (!checkXOWin()) setTimeout(() => {
+            let e = board.map((v,idx) => v === null ? idx : null).filter(v => v !== null);
+            if (e.length > 0) board[e[Math.floor(Math.random()*e.length)]] = 'O';
+            turn = 1; render(); checkXOWin();
+        }, 500);
+    }
+
+    function checkXOWin() {
+        const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+        for(let w of wins) if(board[w[0]] && board[w[0]] === board[w[1]] && board[w[0]] === board[w[2]]) {
+            statusEl.innerText = board[w[0]] + " YUTDI!"; turn = 0; return true;
         }
-        return res;
-    }
-
-    function showStatus(txt, isErr = false) {
-        statusEl.innerText = txt;
-        if (isErr) statusEl.classList.add('error');
-        else statusEl.classList.remove('error');
-    }
-
-    function checkWin() {
-        let p1=0, p2=0;
-        board.flat().forEach(x => { if(x?.p===1) p1++; if(x?.p===2) p2++; });
-        if(p1 === 0) { showStatus("🤖 AI G'ALABA QILDI!"); turn=0; }
-        else if(p2 === 0) { showStatus("🏆 SIZ G'ALABA QILDINGIZ!"); turn=0; }
-    }
-
-    function isChessValid(fr, fc, tr, tc) {
-        const p = board[fr][fc]; if(!p || board[tr][tc]?.p === p.p) return false;
-        const dr = tr-fr, dc = tc-fc, adr = Math.abs(dr), adc = Math.abs(dc);
-        if(p.type === 'p') return dc === 0 && !board[tr][tc] && dr === (p.p===1?-1:1);
-        if(p.type === 'r') return (fr === tr || fc === tc);
-        if(p.type === 'n') return (adr === 2 && adc === 1) || (adr === 1 && adc === 2);
-        if(p.type === 'b') return adr === adc;
-        if(p.type === 'q') return adr === adc || fr === tr || fc === tc;
-        if(p.type === 'k') return adr <= 1 && adc <= 1;
+        if (!board.includes(null)) { statusEl.innerText = "DURANG!"; return true; }
         return false;
     }
 </script>
